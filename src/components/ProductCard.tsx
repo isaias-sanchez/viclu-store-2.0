@@ -1,5 +1,5 @@
 import { Package } from 'lucide-react';
-import type { Product } from '../data/products.ts';
+import type { Product } from '../types/product';
 import { getWhatsAppLink, cn } from '../lib/utils.ts';
 import { CURRENCY } from '../lib/constants.ts';
 
@@ -11,8 +11,16 @@ export function ProductCard({ product }: ProductCardProps) {
     return (
         <div className="flex flex-col gap-3 group">
             {/* Image Placeholder */}
-            <div className="aspect-square bg-brand-gray flex items-center justify-center rounded-sm">
-                <Package className="w-12 h-12 text-brand-platinum/50" strokeWidth={1} />
+            <div className="aspect-square bg-brand-gray flex items-center justify-center rounded-sm overflow-hidden relative">
+                {product.image ? (
+                    <img
+                        src={product.image}
+                        alt={product.name}
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                    />
+                ) : (
+                    <Package className="w-12 h-12 text-brand-platinum/50" strokeWidth={1} />
+                )}
             </div>
 
             {/* Info */}
