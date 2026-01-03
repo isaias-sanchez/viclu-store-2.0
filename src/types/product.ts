@@ -3,7 +3,7 @@ export interface Product {
     name: string;
     brand: string;
     price: number;
-    category: 'Hoodie' | 'Cap'; // Keeping strict category for now to match filtering
+    category: string;
     stock: number;
     description: string;
     color: string;

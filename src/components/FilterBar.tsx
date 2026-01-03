@@ -1,10 +1,10 @@
 import { cn } from '../lib/utils.ts';
-import type { Product } from '../data/products.ts';
+
 
 interface FilterBarProps {
-    categories: Product['category'][];
-    selectedCategory: Product['category'] | 'All';
-    onSelectCategory: (category: Product['category'] | 'All') => void;
+    categories: string[];
+    selectedCategory: string;
+    onSelectCategory: (category: string) => void;
 }
 
 export function FilterBar({ categories, selectedCategory, onSelectCategory }: FilterBarProps) {
@@ -23,7 +23,7 @@ export function FilterBar({ categories, selectedCategory, onSelectCategory }: Fi
                             : "text-brand-platinum/40 hover:text-brand-platinum/70"
                     )}
                 >
-                    {cat === 'All' ? 'TODOS' : cat === 'Hoodie' ? 'HOODIES' : 'GORRAS'}
+                    {cat === 'All' ? 'TODOS' : cat}
                 </button>
             ))}
         </div>
