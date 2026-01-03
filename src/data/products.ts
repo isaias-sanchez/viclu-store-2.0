@@ -25,18 +25,7 @@ export const products: Product[] = [
         active: true,
         image: null
     },
-    {
-        id: '3',
-        name: 'Platinum Hoodie V3',
-        brand: 'Viclu',
-        price: 900,
-        category: 'Hoodie',
-        active: true,
-        stock: 0,
-        description: 'La versión definitiva.',
-        color: 'White',
-        image: null
-    },
+
     {
         id: '4',
         name: 'Viclu Cap Basic',

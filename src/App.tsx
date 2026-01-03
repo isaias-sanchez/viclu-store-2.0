@@ -1,12 +1,11 @@
 import { useState } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Layout } from './components/Layout';
-import { Hero } from './components/Hero';
+import Hero from './components/Hero';
 import { FilterBar } from './components/FilterBar';
-import { ProductCard } from './components/ProductCard';
+import ProductCard from './components/ProductCard';
 import AdminPage from './pages/Admin';
 import { useProducts } from './hooks/useProducts';
-import { type Product } from './types/product';
 
 // Componente para la Home (Catálogo)
 const Catalog = () => {
@@ -53,6 +52,9 @@ const Catalog = () => {
 function App() {
   return (
     <BrowserRouter>
+      {/* Capa de textura global */}
+      <div className="noise-overlay" />
+
       <Routes>
         <Route path="/" element={<Catalog />} />
         <Route path="/admin" element={<AdminPage />} />

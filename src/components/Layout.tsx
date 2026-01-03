@@ -32,7 +32,9 @@ export function Layout({ children }: LayoutProps) {
                         <span className="text-xs uppercase tracking-widest">Síguenos en Instagram</span>
                         <Instagram className="w-4 h-4" />
                     </a>
-                    <p className="text-xs text-brand-platinum/20 uppercase tracking-widest mt-4">Designed by ACTA</p>
+                    <a href="https://actaproyect.online/" target="_blank" rel="noopener noreferrer" className="block text-xs text-brand-platinum/20 uppercase tracking-widest mt-4 hover:text-brand-platinum/40 transition-colors">
+                        Designed by ACTA
+                    </a>
                 </div>
             </footer>
         </div>

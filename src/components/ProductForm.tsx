@@ -1,7 +1,7 @@
 import { useState, type ChangeEvent, type FormEvent } from 'react';
 import type { Product } from '../types/product';
-import { convertToBase64 } from '../lib/utils';
-import { Image as ImageIcon, Upload, X, Save } from 'lucide-react';
+import { supabase } from '../lib/supabaseClient'; // 👈 Importamos el cliente
+import { Image as ImageIcon, Upload, X, Save, Loader2 } from 'lucide-react';
 
 interface ProductFormProps {
     onSubmit: (product: Product) => void;
@@ -19,51 +19,67 @@ const ProductForm = ({ onSubmit, initialData = {}, buttonText = "Guardar Product
         color: '',
         image: null,
         active: true,
-        category: 'Camioneras', // Valor por defecto
+        category: 'Hoodie',
         ...initialData
     });
 
-    const [loadingImage, setLoadingImage] = useState(false);
+    const [uploading, setUploading] = useState(false);
 
-    // Manejo de carga de imagen
+    // --- NUEVA LÓGICA DE SUBIDA A STORAGE ---
     const handleImageUpload = async (e: ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
 
-        // Validación de Tamaño (Máx 5MB)
-        if (file.size > 5 * 1024 * 1024) {
-            alert("⚠️ La imagen es muy pesada. Máximo 5MB.");
+        // Validación básica
+        if (file.size > 2 * 1024 * 1024) { // 2MB límite
+            alert("⚠️ La imagen es muy pesada. Máximo 2MB.");
             return;
         }
 
-        setLoadingImage(true);
+        setUploading(true);
         try {
-            const base64 = await convertToBase64(file);
-            setFormData(prev => ({ ...prev, image: base64 }));
+            // 1. Generar nombre único para no sobrescribir
+            const fileExt = file.name.split('.').pop();
+            const fileName = `${Date.now()}-${Math.random()}.${fileExt}`;
+            const filePath = `${fileName}`;
+
+            // 2. Subir al Bucket 'product-images'
+            const { error: uploadError } = await supabase.storage
+                .from('product-images')
+                .upload(filePath, file);
+
+            if (uploadError) throw uploadError;
+
+            // 3. Obtener la URL Pública
+            const { data } = supabase.storage
+                .from('product-images')
+                .getPublicUrl(filePath);
+
+            // 4. Guardar URL corta en el estado
+            setFormData(prev => ({ ...prev, image: data.publicUrl }));
+
         } catch (error) {
-            console.error("Error imagen:", error);
-            alert("Error al procesar la imagen");
+            console.error("Error subiendo imagen:", error);
+            alert("❌ Error al subir la imagen a la nube.");
         } finally {
-            setLoadingImage(false);
+            setUploading(false);
         }
     };
 
     const handleSubmit = (e: FormEvent) => {
         e.preventDefault();
 
-        // --- VALIDACIÓN EXPLÍCITA (Corrección del error silencioso) ---
-        if (!formData.name || !formData.name.trim()) {
-            alert("❌ El nombre del producto es obligatorio.");
+        if (!formData.name?.trim()) {
+            alert("❌ El nombre es obligatorio.");
             return;
         }
         if (!formData.price || Number(formData.price) <= 0) {
-            alert("❌ El precio debe ser mayor a 0.");
+            alert("❌ El precio debe ser válido.");
             return;
         }
 
-        // Crear objeto limpio
         const newProduct: Product = {
-            id: formData.id || Date.now().toString(),
+            id: formData.id || crypto.randomUUID(),
             name: formData.name,
             brand: formData.brand || 'Viclu',
             price: Number(formData.price),
@@ -71,18 +87,16 @@ const ProductForm = ({ onSubmit, initialData = {}, buttonText = "Guardar Product
             description: formData.description || '',
             color: formData.color || 'N/A',
             active: formData.active ?? true,
-            image: formData.image || null,
-            category: formData.category || 'Camioneras'
+            image: formData.image || null, // Aquí irá la URL corta
+            category: formData.category || 'Hoodie'
         };
 
-        // Enviar al padre
         onSubmit(newProduct);
 
-        // Limpiar formulario solo si es nuevo producto
         if (!initialData.id) {
             setFormData({
                 name: '', brand: '', price: 0, stock: 1,
-                description: '', color: '', image: null, category: 'Camioneras'
+                description: '', color: '', image: null, category: 'Hoodie'
             });
         }
     };
@@ -93,7 +107,13 @@ const ProductForm = ({ onSubmit, initialData = {}, buttonText = "Guardar Product
             {/* SECCIÓN IMAGEN */}
             <div className="flex flex-col items-center justify-center mb-6">
                 <div className="relative w-32 h-40 bg-[#0F0F0F] border-2 border-dashed border-white/20 rounded-lg overflow-hidden group hover:border-[#E5E4E2] transition-colors">
-                    {formData.image ? (
+
+                    {uploading ? (
+                        <div className="flex flex-col items-center justify-center h-full text-[#E5E4E2]">
+                            <Loader2 className="w-8 h-8 animate-spin mb-2" />
+                            <span className="text-[10px]">Subiendo...</span>
+                        </div>
+                    ) : formData.image ? (
                         <>
                             <img src={formData.image} alt="Preview" className="w-full h-full object-cover" />
                             <button
@@ -107,7 +127,7 @@ const ProductForm = ({ onSubmit, initialData = {}, buttonText = "Guardar Product
                     ) : (
                         <div className="flex flex-col items-center justify-center h-full text-white/30">
                             <ImageIcon className="w-8 h-8 mb-2" />
-                            <span className="text-[10px] uppercase text-center">Subir Foto<br />(Max 5MB)</span>
+                            <span className="text-[10px] uppercase text-center">Subir Foto</span>
                         </div>
                     )}
 
@@ -116,21 +136,20 @@ const ProductForm = ({ onSubmit, initialData = {}, buttonText = "Guardar Product
                         accept="image/*"
                         onChange={handleImageUpload}
                         className="absolute inset-0 opacity-0 cursor-pointer"
-                        disabled={loadingImage}
+                        disabled={uploading}
                     />
                 </div>
-                {loadingImage && <span className="text-xs text-[#E5E4E2] mt-2 animate-pulse">Procesando...</span>}
             </div>
 
-            {/* CAMPOS DE TEXTO */}
+            {/* CAMPOS DE TEXTO (Igual que antes) */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-1">
                     <label className="text-xs text-white/50 uppercase ml-1">Nombre *</label>
                     <input
-                        className="w-full p-3 bg-black border border-white/20 rounded text-white focus:border-[#E5E4E2] outline-none transition-colors"
+                        className="w-full p-3 bg-black border border-white/20 rounded text-white focus:border-[#E5E4E2] outline-none"
                         value={formData.name}
                         onChange={e => setFormData({ ...formData, name: e.target.value })}
-                        placeholder="Ej: Gorra Nike"
+                        placeholder="Ej: Hoodie Platinum"
                     />
                 </div>
 
@@ -141,48 +160,8 @@ const ProductForm = ({ onSubmit, initialData = {}, buttonText = "Guardar Product
                         className="w-full p-3 bg-black border border-white/20 rounded text-white focus:border-[#E5E4E2] outline-none"
                         value={formData.price || ''}
                         onChange={e => setFormData({ ...formData, price: Number(e.target.value) })}
-                        placeholder="Ej: 85000"
                     />
                 </div>
-
-                {/* SELECTOR DE CATEGORÍA CON OPCIÓN DE CREAR */}
-                <div className="space-y-1">
-                    <label className="text-xs text-white/50 uppercase ml-1">Categoría</label>
-                    <div className="flex gap-2">
-                        <select
-                            className="w-full p-3 bg-black border border-white/20 rounded text-white focus:border-[#E5E4E2] outline-none"
-                            value={['Camioneras', 'Beisboleras', 'Multimarca'].includes(formData.category || '') ? formData.category : 'Nueva'}
-                            onChange={(e) => {
-                                const val = e.target.value;
-                                if (val !== 'Nueva') {
-                                    setFormData({ ...formData, category: val });
-                                } else {
-                                    // Si selecciona 'Nueva', limpiamos para que escriba
-                                    setFormData({ ...formData, category: '' });
-                                }
-                            }}
-                        >
-                            <option value="Camioneras">Camioneras</option>
-                            <option value="Beisboleras">Beisboleras</option>
-                            <option value="Multimarca">Multimarca</option>
-                            <option value="Nueva">+ Crear Nueva...</option>
-                        </select>
-                    </div>
-                </div>
-
-                {/* CAMPO PARA NUEVA CATEGORÍA (Se muestra si selecciona 'Nueva' o escribe algo custom) */}
-                {(!['Camioneras', 'Beisboleras', 'Multimarca'].includes(formData.category || '')) && (
-                    <div className="space-y-1 animate-in fade-in slide-in-from-top-1">
-                        <label className="text-xs text-[#E5E4E2] uppercase ml-1 font-bold">Escribe la Nueva Categoría</label>
-                        <input
-                            className="w-full p-3 bg-[#111] border border-[#E5E4E2] rounded text-white focus:outline-none"
-                            value={formData.category}
-                            onChange={e => setFormData({ ...formData, category: e.target.value })}
-                            placeholder="Ej: Gorros de lana"
-                            autoFocus
-                        />
-                    </div>
-                )}
 
 
                 <div className="space-y-1">

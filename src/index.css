@@ -1,39 +1,73 @@
-@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600&display=swap');
 @import "tailwindcss";
 
 @theme {
-  --color-brand-black: #0F0F0F;
-  --color-brand-gray: #1A1A1A;
-  --color-brand-platinum: #E5E4E2;
+  --color-brand-dark: #0F0F0F;
+  --color-brand-card: #1A1A1A;
+  --color-brand-platinum: #C9CDD0;
+  --color-brand-text: #F5F5F5;
 
-  --font-sans: "Inter", sans-serif;
+  --font-body: "Inter", sans-serif;
   --font-display: "Bebas Neue", sans-serif;
 }
 
-@utility scrollbar-hide {
-  &::-webkit-scrollbar {
-    display: none;
-  }
-
-  -ms-overflow-style: none;
-  scrollbar-width: none;
+html {
+  scroll-behavior: smooth;
 }
 
-/* Global Reset/Base */
 body {
-  background-color: var(--color-brand-black);
-  color: var(--color-brand-platinum);
-  font-family: var(--font-sans);
+  background-color: var(--color-brand-dark);
+  color: var(--color-brand-text);
+  font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
+  background-image: radial-gradient(circle at center, #1a1a1a 0%, #0f0f0f 100%);
+  min-height: 100vh;
 }
 
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
-  font-family: var(--font-display);
-  letter-spacing: 0.025em;
-  /* wide */
+/* Utilities */
+.glass-panel {
+  @apply bg-brand-dark/80 backdrop-blur-md border-b border-white/5;
+}
+
+.noise-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 50;
+  opacity: 0.03;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+}
+
+.fade-in-up {
+  animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+@keyframes fadeInUp {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-brand-dark);
+}
+
+::-webkit-scrollbar-thumb {
+  background: #333;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-brand-platinum);
 }
